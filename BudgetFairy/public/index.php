@@ -3,7 +3,7 @@ $pageTitle = 'Your financial dashboard';
 require_once __DIR__ . '/../includes/bootstrap.php';
 $uid = require_login();
 $pdo = db();
-
+ 
 processRecurring($uid);
 [$from, $to] = currentMonthRange();
 $st = $pdo->prepare("SELECT
@@ -14,19 +14,19 @@ $st->execute([$uid, $from, $to]);
 $row = $st->fetch();
 $summary = ['income' => (float)$row['income'], 'expenses' => (float)$row['expenses']];
 $summary['savings'] = $summary['income'] - $summary['expenses'];
-
+ 
 $st = $pdo->prepare('SELECT * FROM savings_goals WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 3');
 $st->execute([$uid]); $goals = $st->fetchAll();
 $st = $pdo->prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY transaction_date DESC, id DESC LIMIT 5');
 $st->execute([$uid]); $recent = $st->fetchAll();
-
+ 
 $cats = categoryTotals($uid, $from, $to);
 $history = monthlyHistory($uid, 6);
 $st = $pdo->prepare('SELECT (SELECT COUNT(*) FROM transactions WHERE user_id=?) + (SELECT COUNT(*) FROM savings_goals WHERE user_id=?)');
 $st->execute([$uid, $uid]);
 $isNew = ((int)$st->fetchColumn() === 0);
 $goalColors = ['#7254a8', '#e8789a', '#3fb8a5', '#f2b84b', '#6aa9e9'];
-
+ 
 require __DIR__ . '/../includes/header.php';
 ?>
 <section class="hero-section">
@@ -40,7 +40,6 @@ require __DIR__ . '/../includes/header.php';
    <div class="col-lg-5"><div class="fairy-hero-card">
       <div class="sparkle sparkle-one">✦</div><div class="fairy-orb"><img src="assets/img/fairy.svg" alt="Fia the fairy"></div>
       <div class="text-center"><h5 class="mb-1">Meet Fia, your money guide</h5><p class="text-muted small mb-0">Small changes can create a brighter future.</p></div>
-      <div class="floating-note"><span>✧</span> One step at a time</div>
    </div></div>
  </div></div>
 </section>
@@ -99,3 +98,4 @@ require __DIR__ . '/../includes/header.php';
   </div></div>
 </div></section>
 <?php require __DIR__ . '/../includes/transaction_modal.php'; require __DIR__ . '/../includes/footer.php'; ?>
+ 

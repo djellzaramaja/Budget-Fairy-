@@ -3,7 +3,7 @@ $pageTitle = 'Your financial dashboard';
 require_once __DIR__ . '/../includes/bootstrap.php';
 $uid = require_login();
 $pdo = db();
- 
+
 processRecurring($uid);
 [$from, $to] = currentMonthRange();
 $st = $pdo->prepare("SELECT
@@ -14,19 +14,19 @@ $st->execute([$uid, $from, $to]);
 $row = $st->fetch();
 $summary = ['income' => (float)$row['income'], 'expenses' => (float)$row['expenses']];
 $summary['savings'] = $summary['income'] - $summary['expenses'];
- 
+
 $st = $pdo->prepare('SELECT * FROM savings_goals WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 3');
 $st->execute([$uid]); $goals = $st->fetchAll();
 $st = $pdo->prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY transaction_date DESC, id DESC LIMIT 5');
 $st->execute([$uid]); $recent = $st->fetchAll();
- 
+
 $cats = categoryTotals($uid, $from, $to);
 $history = monthlyHistory($uid, 6);
 $st = $pdo->prepare('SELECT (SELECT COUNT(*) FROM transactions WHERE user_id=?) + (SELECT COUNT(*) FROM savings_goals WHERE user_id=?)');
 $st->execute([$uid, $uid]);
 $isNew = ((int)$st->fetchColumn() === 0);
 $goalColors = ['#7254a8', '#e8789a', '#3fb8a5', '#f2b84b', '#6aa9e9'];
- 
+
 require __DIR__ . '/../includes/header.php';
 ?>
 <section class="hero-section">
@@ -49,7 +49,7 @@ require __DIR__ . '/../includes/header.php';
   <div><h3 class="mb-1">Welcome, <?= e($user['name']) ?>! ✨ Let’s get you started</h3>
   <p class="text-muted mb-3">Three little steps and your dashboard comes alive:</p>
   <ol class="welcome-steps mb-3"><li>Add your income (for example, your salary)</li><li>Add a few expenses</li><li>Create a savings goal and try the what-if simulator</li></ol>
-  <button class="btn btn-primary btn-sm me-2" data-tx-add>+ Add my first transaction</button><a class="btn btn-primary-soft btn-sm" href="savings.php">Create a goal</a></div>
+  <button class="btn btn-primary btn-sm me-2" data-tx-add data-bs-toggle="modal" data-bs-target="#transactionModal">+ Add my first transaction</button><a class="btn btn-primary-soft btn-sm" href="savings.php">Create a goal</a></div>
 </div></section>
 <?php endif; ?>
 <section class="container section-space">
@@ -83,7 +83,7 @@ require __DIR__ . '/../includes/header.php';
 <section class="container pb-5"><div class="row g-4">
   <div class="col-lg-7"><div class="panel-card h-100">
     <div class="d-flex justify-content-between align-items-center mb-3"><div><h3>Recent activity</h3><p class="text-muted small mb-0">Your latest transactions</p></div>
-      <div class="d-flex gap-2"><a class="btn btn-outline-secondary btn-sm" href="transactions.php">View all</a><button class="btn btn-outline-secondary btn-sm" data-tx-add>+ Add transaction</button></div></div>
+      <div class="d-flex gap-2"><a class="btn btn-outline-secondary btn-sm" href="transactions.php">View all</a><button class="btn btn-outline-secondary btn-sm" data-tx-add data-bs-toggle="modal" data-bs-target="#transactionModal">+ Add transaction</button></div></div>
     <?php if (!$recent): ?><div class="empty-state"><div class="empty-icon">↗</div><p class="mb-1 fw-semibold">Your activity will appear here</p><p class="small text-muted">Add your first income or expense to get started.</p></div>
     <?php else: ?><div class="table-responsive"><table class="table align-middle bf-table"><thead><tr><th>Description</th><th>Date</th><th class="text-end">Amount</th></tr></thead><tbody>
     <?php foreach ($recent as $item): ?><tr><td><strong><?= e($item['description']) ?></strong><div class="small text-muted"><?= e($item['category']) ?></div></td><td><?= e($item['transaction_date']) ?></td><td class="text-end <?= $item['type']==='income'?'amount-plus':'amount-minus' ?>"><?= $item['type']==='income'?'+':'−' ?><?= money((float)$item['amount']) ?></td></tr><?php endforeach; ?>
@@ -98,4 +98,3 @@ require __DIR__ . '/../includes/header.php';
   </div></div>
 </div></section>
 <?php require __DIR__ . '/../includes/transaction_modal.php'; require __DIR__ . '/../includes/footer.php'; ?>
- 

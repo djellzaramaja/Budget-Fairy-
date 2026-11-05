@@ -5,7 +5,7 @@ $uid = require_login();
 $pdo = db();
 processRecurring($uid);
 
-
+// Optional month filter (?month=2026-11)
 $month = monthRange($_GET['month'] ?? null) ? $_GET['month'] : '';
 $where = 'user_id = ?'; $params = [$uid];
 if ($month) { [$f, $t] = monthRange($month); $where .= ' AND transaction_date >= ? AND transaction_date < ?'; array_push($params, $f, $t); }
@@ -39,7 +39,7 @@ require __DIR__ . '/../includes/header.php';
         <?php foreach ($months as $ym): ?><option value="<?= e($ym) ?>" <?= $ym === $month ? 'selected' : '' ?>><?= e((new DateTimeImmutable($ym . '-01'))->format('F Y')) ?></option><?php endforeach; ?>
       </select></form>
       <a class="btn btn-outline-secondary btn-sm" href="export.php<?= $month ? '?month=' . e($month) : '' ?>">⬇ Export CSV</a>
-      <button class="btn btn-primary btn-sm" data-tx-add>+ Add transaction</button>
+      <button class="btn btn-primary btn-sm" data-tx-add data-bs-toggle="modal" data-bs-target="#transactionModal">+ Add transaction</button>
     </div>
   </div>
   <?php if (!$items): ?><div class="empty-state"><div class="empty-icon">↗</div><p class="fw-semibold">No transactions <?= $month ? 'in this month' : 'yet' ?></p><p class="small text-muted">Click “Add transaction” to record one.</p></div>

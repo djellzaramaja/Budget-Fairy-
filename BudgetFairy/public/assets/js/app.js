@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof bootstrap === 'undefined') {   // CDN blocked/offline: tell the user instead of failing silently
+    const b = document.createElement('div');
+    b.style.cssText = 'background:#fff3df;color:#8a6023;padding:10px 16px;text-align:center;font:600 14px sans-serif';
+    b.textContent = 'Some parts of BudgetFairy could not load (no internet or a blocked script). Check your connection and refresh the page.';
+    document.body.prepend(b);
+    return;
+  }
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
   const money = v => new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(v);
   const PALETTE = ['#7254a8', '#e8789a', '#3fb8a5', '#f2b84b', '#6aa9e9', '#b28be0', '#f59e7c', '#8fcf9a'];
@@ -88,9 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (form.id === 'transactionForm') {
-      document.querySelectorAll('[data-tx-add]').forEach(btn => btn.addEventListener('click', () => {
-        reset(); bootstrap.Modal.getOrCreateInstance(el('transactionModal')).show();
-      }));
+      // Add buttons open the modal through Bootstrap (data-bs-toggle); we just clear the form when that happens.
+      el('transactionModal')?.addEventListener('show.bs.modal', e => {
+        if (e.relatedTarget && e.relatedTarget.hasAttribute('data-tx-add')) reset();
+      });
     }
     document.querySelectorAll('[data-edit]').forEach(btn => {
       const target = document.querySelector(btn.dataset.target);
